@@ -42,6 +42,7 @@ from reporter.json_export import export_json
 from reporter.html_report import generate_html_report
 from reporter.sarif import export_sarif
 from reporter.voice_briefing import generate_voice_briefing
+from remediator.patcher import generate_unified_patch, apply_patch_directly
 
 
 console = Console(legacy_windows=False)
@@ -125,6 +126,16 @@ Examples:
         "--voice",
         action="store_true",
         help="Generate an executive audio briefing using ElevenLabs Text-to-Speech",
+    )
+    parser.add_argument(
+        "--patch",
+        action="store_true",
+        help="Generate a unified git diff patch file (securescope.patch) with automated code fixes",
+    )
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Automatically apply security remediation directly to files with safety backups (.bak)",
     )
     return parser.parse_args()
 
@@ -391,6 +402,28 @@ def main():
                 f"[yellow]🎙️ Voice briefing transcript generated: {args.report_file}_briefing_transcript.txt\n"
                 f"   (Set ELEVENLABS_API_KEY to synthesize MP3 audio)[/yellow]"
             )
+
+    # ── Step 8: Auto-Remediation & Patch Generation ───────────────────────
+    if args.patch:
+        patch_file = args.report_file + ".patch"
+        _, count = generate_unified_patch(findings, target_path, patch_file)
+        if count > 0:
+            console.print(
+                f"[bold green]🔧 Generated Git patch: {patch_file} "
+                f"({count} fixes ready to apply with 'git apply {patch_file}')[/bold green]"
+            )
+        else:
+            console.print("[dim]No auto-patchable lines found.[/dim]")
+
+    if args.fix:
+        patched_count = apply_patch_directly(findings, target_path, create_backup=True)
+        if patched_count > 0:
+            console.print(
+                f"[bold green]✨ Automatically applied {patched_count} security fixes to source files! "
+                f"(Safety backups saved as .bak)[/bold green]"
+            )
+        else:
+            console.print("[dim]No fixes could be applied automatically.[/dim]")
 
 
 if __name__ == "__main__":

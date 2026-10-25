@@ -170,6 +170,17 @@ python cli.py --path ./my-project --voice --output all
 python cli.py --path ./my-project --output sarif --report-file securescope_report
 ```
 
+### 7. Auto-Remediation: Generate Git Patches or Auto-Fix
+```bash
+# Generate a unified git patch:
+python cli.py --path ./my-project --patch --report-file securescope_patch
+# Apply generated patch with Git:
+git apply securescope_patch.patch
+
+# Or directly apply remediation with safety backups (.bak):
+python cli.py --path ./my-project --fix
+```
+
 ---
 
 ## 🔑 Environment Variables
