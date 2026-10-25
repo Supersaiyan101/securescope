@@ -120,7 +120,7 @@ securescope/
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_GITHUB_USERNAME/securescope.git
+git clone https://github.com/SuperSaiyan101/securescope.git
 cd securescope
 
 # Install dependencies

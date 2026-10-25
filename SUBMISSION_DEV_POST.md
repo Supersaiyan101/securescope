@@ -21,7 +21,7 @@ Naturally, the industry has turned to AI for code analysis. But today's commerci
 
 For individual open-source developers, privacy-conscious startups, and regulated industries (fintech, healthcare, defense), this is often an unacceptable trade-off. Your intellectual property is transferred over the wire, subject to third-party retention policies, vendor rate limits, and recurring subscription bills.
 
-I built **[SecureScope](https://github.com/YOUR_GITHUB_USERNAME/securescope)** to break this trade-off.
+I built **[SecureScope](https://github.com/SuperSaiyan101/securescope)** to break this trade-off.
 
 SecureScope is an open-source, local-first code security intelligence agent built with **Google Gemma 2** at its core. It scans code across 6+ languages, screens vulnerabilities with a microsecond regex pre-filter, verifies threats using specialized open-weight AI personas, grounds findings in live **SerpApi** CVE data, and synthesizes executive voice briefings with **ElevenLabs** — all while keeping your source code strictly under your control.
 
@@ -188,7 +188,7 @@ def search_users(username):
 
 ### 1. Installation
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/securescope.git
+git clone https://github.com/SuperSaiyan101/securescope.git
 cd securescope
 pip install -r requirements.txt
 ```
@@ -264,7 +264,7 @@ Building an open security tool using an open agent harness felt like the ultimat
 
 ## 🔗 Code & Repository
 
-- **GitHub Repository**: [https://github.com/YOUR_GITHUB_USERNAME/securescope](https://github.com/YOUR_GITHUB_USERNAME/securescope)
+- **GitHub Repository**: [https://github.com/SuperSaiyan101/securescope](https://github.com/SuperSaiyan101/securescope)
 - **License**: MIT License
 
 ---
