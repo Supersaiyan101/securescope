@@ -198,19 +198,79 @@ def main():
     # ── Step 4: AI Analysis ───────────────────────────────────────────────
     if args.skip_ai:
         console.print("[yellow]⏭️  Skipping AI analysis (--skip-ai flag)[/yellow]")
-        # Convert pre-filter results to pseudo-findings for reporting
+        # Convert pre-filter results to intelligent findings with OWASP taxonomy and severities
         from analyzer.ai_client import Finding
         findings = []
+
+        CATEGORY_METADATA = {
+            "injection": {
+                "severity": "CRITICAL",
+                "owasp_id": "A03:2021",
+                "owasp_name": "Injection",
+                "title": "Injection Vulnerability (SQL/Command/Eval)",
+                "fix": "Use parameterized queries (e.g. cursor.execute('SELECT * FROM t WHERE id = ?', (val,))) or avoid eval/shell=True.",
+            },
+            "hardcoded_secret": {
+                "severity": "CRITICAL",
+                "owasp_id": "A02:2021",
+                "owasp_name": "Cryptographic Failures",
+                "title": "Hardcoded Secret / Credential Leak",
+                "fix": "Extract sensitive secrets and API keys into secure environment variables (os.environ or .env).",
+            },
+            "weak_crypto": {
+                "severity": "HIGH",
+                "owasp_id": "A02:2021",
+                "owasp_name": "Cryptographic Failures",
+                "title": "Weak or Deprecated Cryptographic Algorithm",
+                "fix": "Replace MD5/SHA-1 with modern collision-resistant algorithms such as SHA-256, Argon2, or bcrypt.",
+            },
+            "deserialization": {
+                "severity": "HIGH",
+                "owasp_id": "A08:2021",
+                "owasp_name": "Software and Data Integrity Failures",
+                "title": "Insecure Deserialization",
+                "fix": "Avoid deserializing untrusted data with pickle or yaml.load without yaml.SafeLoader.",
+            },
+            "auth_issues": {
+                "severity": "HIGH",
+                "owasp_id": "A07:2021",
+                "owasp_name": "Identification & Authentication Failures",
+                "title": "Insecure Authentication or Disabled TLS",
+                "fix": "Enforce SSL/TLS validation (remove verify=False) and require cryptographically signed JWT algorithms.",
+            },
+            "ssrf": {
+                "severity": "HIGH",
+                "owasp_id": "A10:2021",
+                "owasp_name": "Server-Side Request Forgery (SSRF)",
+                "title": "Unvalidated URL Fetching (SSRF Risk)",
+                "fix": "Validate destination URLs against a strict whitelist of approved domains and block internal private IP ranges.",
+            },
+            "debug_enabled": {
+                "severity": "MEDIUM",
+                "owasp_id": "A05:2021",
+                "owasp_name": "Security Misconfiguration",
+                "title": "Debug Mode Enabled in Production Code",
+                "fix": "Disable debug flags (DEBUG = False) and suppress verbose stack traces in production environments.",
+            },
+        }
+
         for snippet in all_snippets:
+            meta = CATEGORY_METADATA.get(snippet.category, {
+                "severity": "MEDIUM",
+                "owasp_id": "A04:2021",
+                "owasp_name": "Insecure Design",
+                "title": f"Suspicious Pattern: {snippet.category}",
+                "fix": "Review code logic manually for security implications.",
+            })
             findings.append(Finding(
-                vulnerability=f"Suspicious pattern: {snippet.category}",
-                severity="MEDIUM",
-                description=f"Pre-filter detected a '{snippet.category}' pattern: {snippet.line_content[:100]}",
-                fix_suggestion="Review this code manually for security implications.",
-                owasp_id="N/A",
-                owasp_name="Uncategorized",
+                vulnerability=meta["title"],
+                severity=meta["severity"],
+                description=f"Pre-filter rule detected dangerous pattern '{snippet.category}' in {snippet.language}: {snippet.line_content[:120]}",
+                fix_suggestion=meta["fix"],
+                owasp_id=meta["owasp_id"],
+                owasp_name=meta["owasp_name"],
                 line_number=snippet.line_number,
-                confidence="LOW",
+                confidence="HIGH" if meta["severity"] == "CRITICAL" else "MEDIUM",
                 file_path=snippet.file_path,
                 relative_path=snippet.relative_path,
                 language=snippet.language,
