@@ -59,6 +59,9 @@ securescope/
 ├── remediator/
 │   ├── __init__.py
 │   └── patcher.py              # Automated Git unified diff patch & safe remediation engine
+├── server/
+│   ├── __init__.py
+│   └── web_server.py           # Real-time Web UI dashboard server & interactive REST API
 ├── reporter/
 │   ├── __init__.py
 │   ├── terminal.py             # Rich terminal reporter with tables, colors, and progress
@@ -212,6 +215,18 @@ git commit -m "feat: add user login"
 python cli.py --install-hook --fail-on critical
 python cli.py --uninstall-hook
 ```
+
+### 10. Real-Time Web UI Dashboard (`--serve`)
+Launch an interactive, browser-based security dashboard with zero external web dependencies:
+```bash
+# Launch on default port (8080):
+python cli.py --serve
+
+# Or specify a custom port / host:
+python cli.py --serve --port 9000 --host 0.0.0.0
+```
+Open `http://localhost:8080` to visually inspect vulnerability cards, filter by severity, download unified Git patches, and apply automatic safe remediations (`.bak`) with a single click.
+
 
 
 

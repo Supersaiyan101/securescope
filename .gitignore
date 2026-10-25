@@ -19,8 +19,10 @@ env/
 *.swo
 *~
 
-# Reports (generated)
+# Reports & artifacts (generated)
 securescope_report.*
+*.patch
+*.bak
 *.html
 !templates/report.html
 

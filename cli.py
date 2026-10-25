@@ -161,12 +161,36 @@ Examples:
         action="store_true",
         help="Uninstall the SecureScope Git pre-commit hook from the repository",
     )
+    parser.add_argument(
+        "--serve",
+        action="store_true",
+        help="Launch the interactive SecureScope Web UI dashboard server",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="Port number for the web dashboard server (default: 8080)",
+    )
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Host address for the web dashboard server (default: 127.0.0.1)",
+    )
     return parser.parse_args()
 
 
 def main():
     """Main entry point."""
     args = parse_args()
+
+    # ── Handle Web Dashboard Server ───────────────────────────────────────
+    if args.serve:
+        print_banner()
+        from server.web_server import start_server
+        start_server(host=args.host, port=args.port)
+        sys.exit(0)
 
     target_path = os.path.abspath(args.path)
 
