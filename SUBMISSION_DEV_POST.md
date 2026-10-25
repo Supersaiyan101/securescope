@@ -2,7 +2,6 @@
 title: SecureScope: Building a Privacy-First AI Code Security Agent with Google Gemma 2, SerpApi & ElevenLabs
 published: true
 tags: hf26challenge, hacktoberfest, ai, opensource
-cover_image: https://raw.githubusercontent.com/username/securescope/main/assets/cover.png
 canonical_url: 
 description: How I built a local-first code security agent powered by Google Gemma 2 that audits repos offline, searches live CVEs via SerpApi, and synthesizes executive voice briefings with ElevenLabs.
 ---
