@@ -38,6 +38,7 @@ class Finding:
     relative_path: str = ""
     language: str = ""
     category: str = ""
+    cve_references: list = field(default_factory=list)
 
 
 @dataclass

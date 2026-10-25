@@ -351,6 +351,16 @@
                     <label>💡 Suggested Fix</label>
                     <p>{{ f.fix_suggestion }}</p>
                 </div>
+                {% if f.cve_references %}
+                <div style="margin-top: 0.75rem; padding: 0.75rem; background: #131b26; border: 1px solid #1f3b58; border-radius: 8px;">
+                    <label style="color: var(--accent); font-weight: 600; font-size: 0.85rem;">🌐 Live CVE & Advisory References (Powered by SerpApi):</label>
+                    <ul style="margin: 0.35rem 0 0 1.25rem; font-size: 0.85rem;">
+                        {% for ref in f.cve_references %}
+                        <li><a href="{{ ref.url }}" target="_blank" style="color: var(--accent); text-decoration: underline;"><strong>{{ ref.id }}</strong></a>: {{ ref.title }} <span style="color: var(--text-dim);">({{ ref.source }})</span></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

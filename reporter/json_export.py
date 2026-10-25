@@ -78,6 +78,7 @@ def export_json(
                 "file": f.relative_path,
                 "line_number": f.line_number,
                 "language": f.language,
+                "cve_references": getattr(f, "cve_references", []),
             }
             for i, f in enumerate(findings)
         ],

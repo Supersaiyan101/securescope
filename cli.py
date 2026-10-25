@@ -36,9 +36,11 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from scanner.file_walker import walk_files
 from scanner.pre_filter import pre_filter_files
 from analyzer.ai_client import analyze_snippets
+from analyzer.cve_search import enrich_findings_with_cve
 from reporter.terminal import print_report, print_banner
 from reporter.json_export import export_json
 from reporter.html_report import generate_html_report
+from reporter.voice_briefing import generate_voice_briefing
 
 
 console = Console(legacy_windows=False)
@@ -111,6 +113,17 @@ Examples:
         "--skip-ai",
         action="store_true",
         help="Only run regex pre-filter (no AI analysis)",
+    )
+    parser.add_argument(
+        "--enrich-cve",
+        action="store_true",
+        default=True,
+        help="Enrich findings with live CVE and Security Advisory data via SerpApi (default: enabled)",
+    )
+    parser.add_argument(
+        "--voice",
+        action="store_true",
+        help="Generate an executive audio briefing using ElevenLabs Text-to-Speech",
     )
     return parser.parse_args()
 
@@ -229,7 +242,7 @@ def main():
         ai_calls = analysis.ai_calls_made
         ai_errors = analysis.errors
 
-    # ── Step 5: Filter by minimum severity ────────────────────────────────
+    # ── Step 5: Filter by minimum severity & enrich with CVE data ───────────
     from config import SEVERITY_ORDER
     min_sev = args.severity.upper()
     min_sev_value = SEVERITY_ORDER.get(min_sev, 0)
@@ -238,10 +251,15 @@ def main():
         if SEVERITY_ORDER.get(f.severity, 0) >= min_sev_value
     ]
 
+    # Enrich findings with live CVE and Security Advisory data via SerpApi
+    if args.enrich_cve and findings:
+        enrich_findings_with_cve(findings)
+
     scan_time = time.time() - start_time
 
     # ── Step 6: Output results ────────────────────────────────────────────
-    model_name = args.model or ("llama-3.1-8b-instant" if args.provider == "groq" else "llama3")
+    # Google Gemma 2 is our flagship open-weight AI model
+    model_name = args.model or ("gemma2-9b-it" if args.provider == "groq" else "gemma2")
 
     if args.output in ("terminal", "all"):
         print_report(
@@ -287,6 +305,22 @@ def main():
             model=model_name,
         )
         console.print(f"[green]📊 HTML report saved: {html_file}[/green]")
+
+    # ── Step 7: Executive Audio Briefing (ElevenLabs) ──────────────────────
+    if args.voice:
+        audio_file, transcript = generate_voice_briefing(
+            findings=findings,
+            total_files=len(files),
+            scan_time=scan_time,
+            output_audio_path=args.report_file + "_briefing.mp3",
+        )
+        if audio_file:
+            console.print(f"[bold green]🎙️ ElevenLabs Audio Briefing saved: {audio_file}[/bold green]")
+        else:
+            console.print(
+                f"[yellow]🎙️ Voice briefing transcript generated: {args.report_file}_briefing_transcript.txt\n"
+                f"   (Set ELEVENLABS_API_KEY to synthesize MP3 audio)[/yellow]"
+            )
 
 
 if __name__ == "__main__":

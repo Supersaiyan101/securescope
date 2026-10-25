@@ -2,26 +2,38 @@
 
 **AI-powered local code security scanner built on open-weight models.**
 
-SecureScope scans your codebase for security vulnerabilities using open-source AI (Llama 3 via Groq / Ollama). Your source code **never leaves your machine** when using a local model. It maps findings to the OWASP Top 10, provides severity scores, and generates AI-powered fix suggestions.
+SecureScope scans your codebase for security vulnerabilities, hardcoded secrets, and injection flaws using open-weight AI (powered by **Google Gemma 2** via Groq or local Ollama). It enriches findings with live **SerpApi** CVE intelligence, maps every vulnerability to the **OWASP Top 10**, generates concrete AI-powered code fix suggestions, and synthesizes executive audio briefings using **ElevenLabs**.
 
-> Built for [Hacktoberfest 2026 — Week 3: Open-Source AI Challenge](https://hacktoberfest.com)
+> Built for [Hacktoberfest 2026 — Week 3: Open-Source AI Challenge](https://hacktoberfest.com) (`#hf26challenge`)
+
+---
+
+## 🏆 Hacktoberfest 2026 Prize Integrations
+
+SecureScope is engineered to showcase the best of open-source AI and partner integrations:
+
+| Category | Partner / Model | How SecureScope Uses It |
+|---|---|---|
+| 🌟 **Featured Category ($200)** | **Google Gemma 2** (`gemma2-9b-it`) | Flagship open-weight foundation model driving code analysis, vulnerability scoring, and remediation suggestions. |
+| 🌐 **Partner Category ($100)** | **SerpApi** | Real-time web search agent grounding AI findings in live NIST NVD, MITRE CWE, and GitHub Security Advisories. |
+| 🎙️ **Partner Category ($100)** | **ElevenLabs** | Executive voice audio security briefing (`--voice`), synthesizing spoken audit summaries and risk alerts. |
+| 🐙 **Partner Category ($100)** | **GitHub Actions** | Drop-in CI/CD workflow template (`.github/workflows/securescope.yml`) to audit Pull Requests and enforce security gates. |
 
 ---
 
 ## ✨ Features
 
-- **Multi-language support** — Python, JavaScript, TypeScript, Go, Java, PHP
-- **OWASP Top 10 mapping** — every finding maps to a real vulnerability category
-- **AI-generated fix suggestions** — not just "here's the bug", but HOW to fix it
-- **Severity scoring** — CRITICAL / HIGH / MEDIUM / LOW per finding
-- **Beautiful HTML report** — shareable, visual, screenshot-worthy
-- **Rich terminal output** — color-coded findings with progress bars
-- **JSON export** — machine-readable output for automation
-- **Git diff mode** — only scan changed files (CI/CD ready)
-- **Regex pre-filter** — fast first pass before AI analysis (saves API calls)
-- **Multi-role AI analysis** — separate specialized prompts for different vulnerability categories
-- **GitHub Actions template** — drop-in CI/CD integration
-- **Offline capable** — use Ollama for 100% local, air-gapped scanning
+- **Google Gemma 2 Powered** — Flagship open-weight model with strong code reasoning and zero vendor lock-in.
+- **100% Offline Capable** — Runs completely offline with Ollama (`--provider ollama --model gemma2`). Your proprietary code never leaves your computer.
+- **Live CVE Intelligence (SerpApi)** — Enriches code findings with real-time CVE IDs and National Vulnerability Database links.
+- **Executive Voice Briefings (ElevenLabs)** — Produces instant audio security briefings (`--voice`) alongside audio transcripts.
+- **Multi-Language Support** — Python, JavaScript, TypeScript, Go, Java, PHP, and configuration files.
+- **OWASP Top 10 (2021) Mapping** — Every finding is classified into A01–A10 taxonomy with severity scoring.
+- **AI Fix Suggestions** — Generates drop-in code patches, not just warning messages.
+- **Fast Regex Pre-Filter** — Screens files in milliseconds before contacting the AI model, preserving compute and tokens.
+- **Interactive Dark-Mode HTML Report** — Zero-dependency standalone HTML dashboard with expandable code findings and remediation steps.
+- **Structured JSON Export** — Machine-readable reports designed for automated CI/CD security pipelines.
+- **Git Diff Mode** — Scan only changed files in current branch/PR with `--diff`.
 
 ---
 
@@ -29,84 +41,77 @@ SecureScope scans your codebase for security vulnerabilities using open-source A
 
 ```
 securescope/
-├── cli.py                      # Entry point — Rich CLI with argparse + progress bars
-├── config.py                   # Model config, OWASP mappings, file type rules, severity levels
+├── cli.py                      # Main CLI entry point with Rich terminal dashboard
+├── config.py                   # Central settings: Gemma 2, SerpApi, ElevenLabs, OWASP rules
 ├── scanner/
 │   ├── __init__.py
 │   ├── file_walker.py          # Git-aware file traversal (respects .gitignore, supports --diff)
-│   ├── pre_filter.py           # Regex-based pre-screening (fast pass for obvious issues)
-│   └── languages.py            # Per-language file extensions and regex patterns
+│   ├── pre_filter.py           # Multi-language regex engine extracting suspicious snippets
+│   └── languages.py            # 200+ targeted vulnerability patterns across 6+ languages
 ├── analyzer/
 │   ├── __init__.py
-│   ├── ai_client.py            # AI backend adapter (Groq API / Ollama local)
-│   ├── prompts.py              # Specialized system prompts per vulnerability category
-│   └── owasp_mapper.py         # Maps AI findings → OWASP Top 10 categories
+│   ├── ai_client.py            # AI adapter for Google Gemma 2 (Groq API & Ollama local)
+│   ├── prompts.py              # Specialized multi-role system prompts (Secrets, Injection, Auth, Crypto)
+│   ├── owasp_mapper.py         # Maps findings into OWASP Top 10 (2021) categories
+│   └── cve_search.py           # Live CVE & advisory enrichment powered by SerpApi
 ├── reporter/
 │   ├── __init__.py
-│   ├── terminal.py             # Rich library terminal output (tables, colors, panels)
-│   ├── html_report.py          # Generates standalone HTML report using Jinja2
-│   └── json_export.py          # Exports findings as structured JSON
+│   ├── terminal.py             # Rich terminal reporter with tables, colors, and progress
+│   ├── html_report.py          # Standalone HTML report generator
+│   ├── json_export.py          # CI/CD JSON exporter
+│   └── voice_briefing.py       # ElevenLabs Text-to-Speech audio security briefing generator
 ├── templates/
-│   └── report.html             # Jinja2 HTML template for the visual report
+│   └── report.html             # Dark-mode Jinja2 HTML report template with CVE badges
 ├── .github/
 │   └── workflows/
-│       └── securescope.yml     # GitHub Actions workflow template
+│       └── securescope.yml     # Drop-in GitHub Actions automated security audit workflow
+├── tests/
+│   └── fixtures/               # Vulnerable test suite covering OWASP Top 10 (Python & JS)
 ├── requirements.txt            # Python dependencies
-├── setup.py                    # Package setup (pip installable)
-├── .gitignore
+├── SUBMISSION_DEV_POST.md      # Ready-to-publish Hacktoberfest DEV.to submission
 ├── LICENSE                     # MIT License
-└── README.md                   # This file
+└── README.md                   # Project documentation
 ```
 
 ---
 
-## 🛠️ Tech Stack
-
-| Component | Technology | Why |
-|-----------|-----------|-----|
-| Language | Python 3.10+ | Ecosystem, speed of development |
-| AI Model | Llama 3 (70B/8B) | Open-weight, strong at code analysis |
-| AI Provider | Groq (cloud) / Ollama (local) | Groq = fast + free tier; Ollama = 100% offline |
-| CLI Framework | argparse + Rich | Beautiful terminal output, zero complexity |
-| HTML Reports | Jinja2 | Simple templating for standalone HTML |
-| Git Integration | subprocess (git CLI) | No extra deps, uses system git |
-
----
-
-## 🔄 How It Works — Data Flow
+## 🔄 Architecture & Data Flow
 
 ```
-1. CLI parses arguments (path, mode, output format)
-         ↓
-2. file_walker.py traverses the target directory
-   - Respects .gitignore
-   - In --diff mode, only picks git-changed files
-   - Filters by supported language extensions
-         ↓
-3. pre_filter.py runs regex patterns on each file
-   - Catches: hardcoded secrets, SQL strings, eval/exec, weak crypto, etc.
-   - Extracts "suspicious snippets" (the code chunk + line numbers)
-   - Files with zero regex hits are skipped (saves AI calls)
-         ↓
-4. ai_client.py sends snippets to the AI model
-   - Uses 4 specialized roles (prompts.py):
-     Role 1: Secret/credential leak detection
-     Role 2: Injection flaws (SQL, command, XSS)
-     Role 3: Authentication & session issues
-     Role 4: Cryptography & hashing weaknesses
-   - Each role analyzes only the relevant snippets
-   - AI returns structured JSON with: vulnerability, severity, description, fix
-         ↓
-5. owasp_mapper.py maps each finding to OWASP Top 10 (2021)
-   - A01:2021 Broken Access Control
-   - A02:2021 Cryptographic Failures
-   - A03:2021 Injection
-   - ... etc.
-         ↓
-6. Reporter outputs results:
-   - terminal.py  → Rich tables in the terminal
-   - html_report.py → Standalone HTML file
-   - json_export.py → findings.json
+                      ┌───────────────────────────────┐
+                      │    Target Codebase / Repo     │
+                      └──────────────┬────────────────┘
+                                     │
+                         1. Git-Aware File Walker
+                            (respects .gitignore,
+                             supports --diff mode)
+                                     │
+                                     ▼
+                         2. Regex Pre-Filter Engine
+                            (Screens 200+ patterns;
+                             skips clean files)
+                                     │
+                                     ▼
+                      3. Google Gemma 2 Analysis
+                       (Multi-Role AI Security Agent)
+                  ┌──────────────────┼──────────────────┐
+                  ▼                  ▼                  ▼
+           Role 1: Secrets    Role 2: Injection  Role 3: Auth & SSRF
+                  └──────────────────┬──────────────────┘
+                                     │
+                      4. Live CVE Grounding (SerpApi)
+                         (Fetches NIST NVD & MITRE CVEs)
+                                     │
+                                     ▼
+                         5. OWASP Top 10 Mapping
+                            (A01:2021 to A10:2021)
+                                     │
+                                     ▼
+                        6. Multi-Modal Reporting
+                  ┌──────────────────┼──────────────────┐
+                  ▼                  ▼                  ▼
+            Rich Terminal      Interactive HTML   ElevenLabs Voice
+              Dashboard           Dashboard           Briefing
 ```
 
 ---
@@ -114,13 +119,9 @@ securescope/
 ## ⚙️ Installation
 
 ```bash
-# Clone the repo
-git clone https://github.com/YOUR_USERNAME/securescope.git
+# Clone the repository
+git clone https://github.com/YOUR_GITHUB_USERNAME/securescope.git
 cd securescope
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -128,105 +129,62 @@ pip install -r requirements.txt
 
 ---
 
-## 🚀 Usage
+## 🚀 Quickstart & Usage
 
-### Basic scan
+### 1. Instant Scan (Pre-Filter & CVE Mapping)
+Run on the included test fixtures without an AI key:
 ```bash
-python cli.py --path /path/to/your/project
+python cli.py --path ./tests/fixtures/vulnerable_app --skip-ai --output all
 ```
 
-### Scan with HTML report
+### 2. Full AI Security Scan with Google Gemma 2 (Cloud)
+Using free Groq API:
 ```bash
-python cli.py --path ./my-project --output html --report-file report.html
+# Set your Groq API key (free at console.groq.com)
+export GROQ_API_KEY="gsk_..."  # On Windows PowerShell: $env:GROQ_API_KEY="gsk_..."
+
+# Run audit using Gemma 2
+python cli.py --path ./my-project --output all
 ```
 
-### Scan only git-changed files
+### 3. 100% Offline Scanning with Local Gemma 2 (Ollama)
 ```bash
-python cli.py --path ./my-project --diff
+ollama pull gemma2
+python cli.py --path ./my-project --provider ollama --model gemma2 --output all
 ```
 
-### Use local Ollama instead of Groq
+### 4. Enable Live SerpApi CVE Intelligence
 ```bash
-python cli.py --path ./my-project --provider ollama --model llama3
+export SERPAPI_API_KEY="your_serpapi_key"
+python cli.py --path ./my-project --enrich-cve --output all
 ```
 
-### JSON export for CI/CD
+### 5. Generate ElevenLabs Executive Voice Briefing
 ```bash
-python cli.py --path ./my-project --output json --report-file findings.json
+export ELEVENLABS_API_KEY="your_elevenlabs_key"
+python cli.py --path ./my-project --voice --output all
 ```
 
 ---
 
-## 🔑 Configuration
+## 🔑 Environment Variables
 
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GROQ_API_KEY` | Yes (if using Groq) | — | Free API key from [console.groq.com](https://console.groq.com) |
-| `OLLAMA_HOST` | No | `http://localhost:11434` | Ollama server URL |
-
-### CLI Arguments
-
-| Argument | Type | Default | Description |
-|----------|------|---------|-------------|
-| `--path` | str | `.` | Path to scan |
-| `--output` | str | `terminal` | Output format: `terminal`, `html`, `json`, `all` |
-| `--report-file` | str | `securescope_report` | Output filename (without extension) |
-| `--diff` | flag | `false` | Only scan git-changed files |
-| `--provider` | str | `groq` | AI provider: `groq` or `ollama` |
-| `--model` | str | `llama-3.1-8b-instant` | Model name to use |
-| `--severity` | str | `low` | Minimum severity to report: `low`, `medium`, `high`, `critical` |
-| `--verbose` | flag | `false` | Show detailed processing info |
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `GROQ_API_KEY` | Optional | — | Free key to run Google Gemma 2 (`gemma2-9b-it`) in cloud |
+| `OLLAMA_HOST` | Optional | `http://localhost:11434` | Local Ollama endpoint for 100% offline scanning |
+| `SERPAPI_API_KEY` | Optional | — | Real-time CVE and vulnerability intelligence search |
+| `ELEVENLABS_API_KEY` | Optional | — | Generates executive audio briefings (`.mp3`) |
+| `ELEVENLABS_VOICE_ID` | Optional | `21m00Tcm4TlvDq8ikWAM` | Voice ID for audio narration |
 
 ---
 
-## 🗺️ OWASP Top 10 (2021) Coverage
+## 🐙 CI/CD Integration (GitHub Actions)
 
-| ID | Category | SecureScope Detection |
-|----|----------|----------------------|
-| A01 | Broken Access Control | Auth checks, role validation |
-| A02 | Cryptographic Failures | Weak hashing, hardcoded keys, poor TLS |
-| A03 | Injection | SQL, command, XSS, template injection |
-| A04 | Insecure Design | Insecure defaults, missing validation |
-| A05 | Security Misconfiguration | Debug modes, verbose errors, default creds |
-| A06 | Vulnerable Components | Known risky imports/patterns |
-| A07 | Auth Failures | Weak passwords, missing MFA hints |
-| A08 | Data Integrity Failures | Deserialization, unsigned data |
-| A09 | Logging Failures | Missing audit logs, sensitive data in logs |
-| A10 | SSRF | Unvalidated URL fetching |
-
----
-
-## 🧪 Testing
-
-```bash
-# Run on the included test fixtures
-python cli.py --path ./tests/fixtures/vulnerable_app --output all
-```
+A pre-configured GitHub Actions workflow is provided in `.github/workflows/securescope.yml`. It runs on every push and pull request, uploads reports as artifacts, and blocks merges if `CRITICAL` vulnerabilities are discovered.
 
 ---
 
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 🙏 Acknowledgments
-
-- [Groq](https://groq.com) — Lightning-fast open-model inference
-- [Ollama](https://ollama.ai) — Local LLM runtime
-- [Meta Llama 3](https://llama.meta.com) — Open-weight foundation model
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/) — Industry-standard vulnerability classification
-- [Rich](https://github.com/Textualize/rich) — Beautiful terminal output

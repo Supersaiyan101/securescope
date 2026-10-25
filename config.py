@@ -8,14 +8,24 @@ severity levels, and file type rules.
 import os
 
 # ---------------------------------------------------------------------------
-# AI Provider Settings
+# AI Provider & Model Settings (Gemma 2 as Flagship Open-Weight Model)
 # ---------------------------------------------------------------------------
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-GROQ_DEFAULT_MODEL = "llama-3.1-8b-instant"
+# Default to Google Gemma 2 (open-weight model)
+GROQ_DEFAULT_MODEL = "gemma2-9b-it"
 
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_DEFAULT_MODEL = "llama3"
+OLLAMA_DEFAULT_MODEL = "gemma2"
+
+# ---------------------------------------------------------------------------
+# Partner Integrations: SerpApi & ElevenLabs
+# ---------------------------------------------------------------------------
+
+SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "")
+
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
+ELEVENLABS_VOICE_ID = os.environ.get("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")  # Rachel voice
 
 # Max tokens per AI request
 MAX_TOKENS = 2048
