@@ -43,6 +43,7 @@ from reporter.html_report import generate_html_report
 from reporter.sarif import export_sarif
 from reporter.voice_briefing import generate_voice_briefing
 from remediator.patcher import generate_unified_patch, apply_patch_directly
+from scanner.dependency_auditor import audit_dependencies
 
 
 console = Console(legacy_windows=False)
@@ -137,6 +138,11 @@ Examples:
         action="store_true",
         help="Automatically apply security remediation directly to files with safety backups (.bak)",
     )
+    parser.add_argument(
+        "--no-sca",
+        action="store_true",
+        help="Disable Software Composition Analysis (SCA) dependency vulnerability auditing",
+    )
     return parser.parse_args()
 
 
@@ -193,19 +199,9 @@ def main():
         f"{total_snippets} suspicious snippets found[/cyan]"
     )
 
-    if not all_snippets:
-        console.print("[bold green]✅ No suspicious patterns found — code looks clean![/bold green]")
-        scan_time = time.time() - start_time
-        print_report(
-            findings=[],
-            total_files=len(files),
-            files_with_hits=0,
-            total_snippets=0,
-            ai_calls=0,
-            scan_time=scan_time,
-            errors=[],
-        )
-        sys.exit(0)
+    findings = []
+    ai_calls = 0
+    ai_errors = []
 
     # ── Step 4: AI Analysis ───────────────────────────────────────────────
     if args.skip_ai:
@@ -313,6 +309,32 @@ def main():
         findings = analysis.findings
         ai_calls = analysis.ai_calls_made
         ai_errors = analysis.errors
+
+    # ── Step 4.5: Software Composition Analysis (SCA) ─────────────────────
+    if not args.no_sca:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("📦 Auditing package dependencies (Google OSV API)...", total=None)
+            sca_findings = audit_dependencies(target_path)
+            progress.update(task, description=f"📦 Found {len(sca_findings)} vulnerable dependency advisories")
+        findings.extend(sca_findings)
+
+    if not findings and not all_snippets:
+        console.print("[bold green]✅ No suspicious patterns or vulnerable dependencies found — code looks clean![/bold green]")
+        scan_time = time.time() - start_time
+        print_report(
+            findings=[],
+            total_files=len(files),
+            files_with_hits=0,
+            total_snippets=0,
+            ai_calls=0,
+            scan_time=scan_time,
+            errors=[],
+        )
+        sys.exit(0)
 
     # ── Step 5: Filter by minimum severity & enrich with CVE data ───────────
     from config import SEVERITY_ORDER

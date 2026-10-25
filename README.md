@@ -47,16 +47,21 @@ securescope/
 │   ├── __init__.py
 │   ├── file_walker.py          # Git-aware file traversal (respects .gitignore, supports --diff)
 │   ├── pre_filter.py           # Multi-language regex engine extracting suspicious snippets
-│   └── languages.py            # 200+ targeted vulnerability patterns across 6+ languages
+│   ├── languages.py            # 200+ targeted vulnerability patterns across 6+ languages
+│   └── dependency_auditor.py   # Software Supply-Chain & Dependency Auditor (Google OSV)
 ├── analyzer/
 │   ├── __init__.py
 │   ├── ai_client.py            # AI adapter for Google Gemma 2 (Groq API & Ollama local)
 │   ├── prompts.py              # Specialized multi-role system prompts (Secrets, Injection, Auth, Crypto)
 │   ├── owasp_mapper.py         # Maps findings into OWASP Top 10 (2021) categories
 │   └── cve_search.py           # Live CVE & advisory enrichment powered by SerpApi
+├── remediator/
+│   ├── __init__.py
+│   └── patcher.py              # Automated Git unified diff patch & safe remediation engine
 ├── reporter/
 │   ├── __init__.py
 │   ├── terminal.py             # Rich terminal reporter with tables, colors, and progress
+│   ├── sarif.py                # OASIS SARIF 2.1.0 generator for GitHub Code Scanning
 │   ├── html_report.py          # Standalone HTML report generator
 │   ├── json_export.py          # CI/CD JSON exporter
 │   └── voice_briefing.py       # ElevenLabs Text-to-Speech audio security briefing generator
@@ -180,6 +185,17 @@ git apply securescope_patch.patch
 # Or directly apply remediation with safety backups (.bak):
 python cli.py --path ./my-project --fix
 ```
+
+### 8. Software Supply-Chain & Dependency Auditing (SCA)
+SecureScope automatically audits third-party package manifests (`requirements.txt`, `package.json`) against the open-source **Google OSV (Open Source Vulnerabilities)** database, pinpointing known CVEs, severity ratings, and recommended fixed versions:
+```bash
+# Auditing is enabled by default during scans:
+python cli.py --path ./my-project
+
+# To disable dependency auditing:
+python cli.py --path ./my-project --no-sca
+```
+
 
 ---
 
