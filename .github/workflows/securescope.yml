@@ -1,0 +1,52 @@
+name: SecureScope Security Scan
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  security-scan:
+    name: 🔐 SecureScope Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff mode
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install SecureScope
+        run: |
+          pip install groq rich jinja2
+
+      - name: Run SecureScope
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python cli.py --path . --output all --report-file securescope_report
+
+      - name: Upload HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: securescope-report
+          path: |
+            securescope_report.html
+            securescope_report.json
+
+      - name: Check for Critical Findings
+        run: |
+          if [ -f securescope_report.json ]; then
+            CRITICAL=$(python -c "import json; data=json.load(open('securescope_report.json')); print(data['summary']['severity_breakdown'].get('CRITICAL', 0))")
+            if [ "$CRITICAL" -gt 0 ]; then
+              echo "::error::SecureScope found $CRITICAL CRITICAL vulnerabilities!"
+              exit 1
+            fi
+          fi

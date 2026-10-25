@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureScope — Security Report</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface-hover: #1c2333;
+            --border: #30363d;
+            --text: #e6edf3;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --critical: #f85149;
+            --high: #f0883e;
+            --medium: #d29922;
+            --low: #58a6ff;
+            --info: #8b949e;
+            --success: #3fb950;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 2rem 0 3rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--accent), #bc8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle { color: var(--text-dim); font-size: 1.1rem; }
+        .header .meta { color: var(--text-dim); font-size: 0.85rem; margin-top: 1rem; }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+        }
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        .stat-card .label { color: var(--text-dim); font-size: 0.85rem; }
+
+        /* Sections */
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Severity bars */
+        .severity-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .severity-label {
+            width: 100px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .severity-bar-bg {
+            flex: 1;
+            height: 24px;
+            background: var(--bg);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .severity-bar {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .severity-CRITICAL { background: var(--critical); color: #fff; }
+        .severity-HIGH { background: var(--high); color: #fff; }
+        .severity-MEDIUM { background: var(--medium); color: #000; }
+        .severity-LOW { background: var(--low); color: #fff; }
+
+        /* OWASP */
+        .owasp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+        .owasp-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .owasp-item .count {
+            background: var(--accent);
+            color: var(--bg);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        /* Findings */
+        .finding {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .finding:hover { border-color: var(--accent); }
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .finding-header h3 { font-size: 1rem; }
+        .finding-body {
+            padding: 0 1.25rem 1.25rem;
+            display: none;
+        }
+        .finding.open .finding-body { display: block; }
+        .finding-meta {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .badge-CRITICAL { background: var(--critical); color: #fff; }
+        .badge-HIGH { background: var(--high); color: #fff; }
+        .badge-MEDIUM { background: var(--medium); color: #000; }
+        .badge-LOW { background: var(--low); color: #fff; }
+        .badge-owasp { background: #6e40c9; color: #fff; }
+        .badge-confidence { background: var(--border); color: var(--text); }
+        .finding-field { margin-bottom: 0.75rem; }
+        .finding-field label { font-weight: 600; color: var(--text-dim); font-size: 0.85rem; display: block; }
+        .finding-field p { margin-top: 0.25rem; }
+        .fix-box {
+            background: #0d2818;
+            border: 1px solid #238636;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+        }
+        .fix-box label { color: var(--success); }
+
+        /* Verdict */
+        .verdict {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .verdict-pass { background: #0d2818; border: 2px solid var(--success); color: var(--success); }
+        .verdict-fail { background: #2d1117; border: 2px solid var(--critical); color: var(--critical); }
+        .verdict-warn { background: #2d2200; border: 2px solid var(--medium); color: var(--medium); }
+        .verdict-info { background: #0d1d30; border: 2px solid var(--accent); color: var(--accent); }
+
+        /* Errors */
+        .error-item {
+            background: #2d1117;
+            border: 1px solid var(--critical);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* Expand/collapse arrow */
+        .arrow {
+            transition: transform 0.2s;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+        }
+        .finding.open .arrow { transform: rotate(90deg); }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>🔐 SecureScope</h1>
+        <p class="subtitle">AI-Powered Code Security Report</p>
+        <p class="meta">
+            Generated: {{ timestamp }} &nbsp;|&nbsp;
+            Target: <code>{{ target_path }}</code> &nbsp;|&nbsp;
+            Model: {{ provider }} / {{ model }}
+        </p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="value">{{ total_files }}</div>
+            <div class="label">Files Scanned</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ files_with_hits }}</div>
+            <div class="label">Files Flagged</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ total_snippets }}</div>
+            <div class="label">Snippets Analyzed</div>
+        </div>
+        <div class="stat-card">
+            <div class="value" style="color: {% if total_findings > 0 %}var(--critical){% else %}var(--success){% endif %}">{{ total_findings }}</div>
+            <div class="label">Findings</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ ai_calls }}</div>
+            <div class="label">AI Calls</div>
+        </div>
+        <div class="stat-card">
+            <div class="value">{{ scan_time }}s</div>
+            <div class="label">Scan Time</div>
+        </div>
+    </div>
+
+    <!-- Severity Breakdown -->
+    {% if severity_counts %}
+    <div class="section">
+        <h2>⚠️ Severity Breakdown</h2>
+        {% set max_count = severity_counts.values() | max %}
+        {% for sev in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] %}
+        {% if severity_counts.get(sev, 0) > 0 %}
+        <div class="severity-row">
+            <span class="severity-label severity-{{ sev }}">{{ sev }}</span>
+            <div class="severity-bar-bg">
+                <div class="severity-bar severity-{{ sev }}" style="width: {{ (severity_counts[sev] / max_count * 100) | int }}%">
+                    {{ severity_counts[sev] }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- OWASP Breakdown -->
+    {% if owasp_counts %}
+    <div class="section">
+        <h2>🗺️ OWASP Top 10 Coverage</h2>
+        <div class="owasp-grid">
+            {% for cat, count in owasp_counts.items() | sort %}
+            <div class="owasp-item">
+                <span>{{ cat }}</span>
+                <span class="count">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Findings -->
+    <div class="section">
+        <h2>🔍 Detailed Findings ({{ findings | length }})</h2>
+        {% if findings %}
+        {% for f in findings %}
+        <div class="finding" onclick="this.classList.toggle('open')">
+            <div class="finding-header">
+                <h3>
+                    <span class="badge badge-{{ f.severity }}">{{ f.severity }}</span>
+                    &nbsp; #{{ loop.index }} — {{ f.vulnerability }}
+                </h3>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="finding-body">
+                <div class="finding-meta">
+                    <span class="badge badge-owasp">{{ f.owasp_id }}</span>
+                    <span class="badge badge-confidence">Confidence: {{ f.confidence }}</span>
+                    <span style="color: var(--text-dim);">📄 {{ f.relative_path }}{% if f.line_number %} : line {{ f.line_number }}{% endif %}</span>
+                </div>
+                <div class="finding-field">
+                    <label>Description</label>
+                    <p>{{ f.description }}</p>
+                </div>
+                <div class="fix-box">
+                    <label>💡 Suggested Fix</label>
+                    <p>{{ f.fix_suggestion }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p style="text-align: center; color: var(--success); font-size: 1.2rem; padding: 2rem;">
+            ✅ No security vulnerabilities detected!
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Errors -->
+    {% if errors %}
+    <div class="section">
+        <h2>❌ Errors</h2>
+        {% for error in errors %}
+        <div class="error-item">{{ error }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Verdict -->
+    {% if findings | length == 0 %}
+    <div class="verdict verdict-pass">🎉 PASSED — No vulnerabilities detected</div>
+    {% elif severity_counts.get('CRITICAL', 0) > 0 %}
+    <div class="verdict verdict-fail">🚨 FAILED — {{ severity_counts['CRITICAL'] }} CRITICAL issue(s) found</div>
+    {% elif severity_counts.get('HIGH', 0) > 0 %}
+    <div class="verdict verdict-warn">⚠️ WARNING — {{ severity_counts['HIGH'] }} HIGH severity issue(s) found</div>
+    {% else %}
+    <div class="verdict verdict-info">ℹ️ REVIEW — {{ findings | length }} issue(s) to review</div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Generated by <strong>SecureScope v1.0.0</strong> — AI-Powered Code Security Scanner</p>
+        <p>Powered by open-weight AI models 🤖 | <a href="https://github.com">View on GitHub</a></p>
+    </div>
+</div>
+</body>
+</html>

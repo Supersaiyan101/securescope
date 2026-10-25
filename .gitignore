@@ -1,0 +1,33 @@
+# SecureScope
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Reports (generated)
+securescope_report.*
+*.html
+!templates/report.html
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
