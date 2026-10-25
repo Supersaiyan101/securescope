@@ -40,6 +40,7 @@ from analyzer.cve_search import enrich_findings_with_cve
 from reporter.terminal import print_report, print_banner
 from reporter.json_export import export_json
 from reporter.html_report import generate_html_report
+from reporter.sarif import export_sarif
 from reporter.voice_briefing import generate_voice_briefing
 
 
@@ -69,7 +70,7 @@ Examples:
     parser.add_argument(
         "--output",
         type=str,
-        choices=["terminal", "html", "json", "all"],
+        choices=["terminal", "html", "json", "sarif", "all"],
         default="terminal",
         help="Output format (default: terminal)",
     )
@@ -365,6 +366,15 @@ def main():
             model=model_name,
         )
         console.print(f"[green]📊 HTML report saved: {html_file}[/green]")
+
+    if args.output in ("sarif", "all"):
+        sarif_file = args.report_file + ".sarif"
+        export_sarif(
+            findings=findings,
+            output_file=sarif_file,
+            target_path=target_path,
+        )
+        console.print(f"[green]🛡️ SARIF 2.1.0 report saved: {sarif_file}[/green]")
 
     # ── Step 7: Executive Audio Briefing (ElevenLabs) ──────────────────────
     if args.voice:

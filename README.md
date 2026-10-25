@@ -165,6 +165,11 @@ export ELEVENLABS_API_KEY="your_elevenlabs_key"
 python cli.py --path ./my-project --voice --output all
 ```
 
+### 6. Export to SARIF for GitHub Code Scanning
+```bash
+python cli.py --path ./my-project --output sarif --report-file securescope_report
+```
+
 ---
 
 ## 🔑 Environment Variables

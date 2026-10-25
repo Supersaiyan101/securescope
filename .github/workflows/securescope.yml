@@ -11,6 +11,10 @@ jobs:
     name: 🔐 SecureScope Scan
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      security-events: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +36,7 @@ jobs:
         run: |
           python cli.py --path . --output all --report-file securescope_report
 
-      - name: Upload HTML Report
+      - name: Upload Build Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -40,6 +44,14 @@ jobs:
           path: |
             securescope_report.html
             securescope_report.json
+            securescope_report.sarif
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: securescope_report.sarif
+        continue-on-error: true
 
       - name: Check for Critical Findings
         run: |
