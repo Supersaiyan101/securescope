@@ -60,11 +60,14 @@ def generate_html_report(
 
     template = Template(template_str)
 
+    # Privacy-friendly clean display for target path (hide full system paths)
+    display_target = os.path.basename(target_path.rstrip("/\\")) or target_path
+
     html = template.render(
         tool_name="SecureScope",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-        target_path=target_path,
+        target_path=display_target,
         provider=provider,
         model=model,
         total_files=total_files,
