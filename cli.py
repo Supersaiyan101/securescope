@@ -44,6 +44,7 @@ from reporter.sarif import export_sarif
 from reporter.voice_briefing import generate_voice_briefing
 from remediator.patcher import generate_unified_patch, apply_patch_directly
 from scanner.dependency_auditor import audit_dependencies
+from scanner.git_hook import install_pre_commit_hook, uninstall_pre_commit_hook
 
 
 console = Console(legacy_windows=False)
@@ -143,6 +144,23 @@ Examples:
         action="store_true",
         help="Disable Software Composition Analysis (SCA) dependency vulnerability auditing",
     )
+    parser.add_argument(
+        "--fail-on",
+        type=str,
+        choices=["low", "medium", "high", "critical", "none"],
+        default="none",
+        help="Exit with code 1 if findings meet or exceed this severity (useful for CI/CD and pre-commit)",
+    )
+    parser.add_argument(
+        "--install-hook",
+        action="store_true",
+        help="Install SecureScope as a Git pre-commit hook in the repository",
+    )
+    parser.add_argument(
+        "--uninstall-hook",
+        action="store_true",
+        help="Uninstall the SecureScope Git pre-commit hook from the repository",
+    )
     return parser.parse_args()
 
 
@@ -155,6 +173,29 @@ def main():
     if not os.path.isdir(target_path):
         console.print(f"[bold red]Error:[/bold red] Path does not exist: {target_path}")
         sys.exit(1)
+
+    # ── Handle Git Hook Installation / Removal ───────────────────────────
+    if args.install_hook:
+        print_banner()
+        severity = "high" if args.fail_on == "none" else args.fail_on
+        ok, msg = install_pre_commit_hook(target_path, fail_severity=severity)
+        if ok:
+            console.print(f"[bold green]🪝 {msg}[/bold green]")
+            console.print(f"[dim]SecureScope will now screen staged files (--diff) for {severity.upper()}+ issues before commits.[/dim]")
+            sys.exit(0)
+        else:
+            console.print(f"[bold red]❌ {msg}[/bold red]")
+            sys.exit(1)
+
+    if args.uninstall_hook:
+        print_banner()
+        ok, msg = uninstall_pre_commit_hook(target_path)
+        if ok:
+            console.print(f"[bold green]🗑️ {msg}[/bold green]")
+            sys.exit(0)
+        else:
+            console.print(f"[bold red]❌ {msg}[/bold red]")
+            sys.exit(1)
 
     start_time = time.time()
 
@@ -230,7 +271,7 @@ def main():
                 "owasp_id": "A02:2021",
                 "owasp_name": "Cryptographic Failures",
                 "title": "Weak or Deprecated Cryptographic Algorithm",
-                "fix": "Replace MD5/SHA-1 with modern collision-resistant algorithms such as SHA-256, Argon2, or bcrypt.",
+                "fix": "Replace legacy hash functions with modern collision-resistant algorithms such as SHA-256, Argon2, or bcrypt.",
             },
             "deserialization": {
                 "severity": "HIGH",
@@ -244,7 +285,7 @@ def main():
                 "owasp_id": "A07:2021",
                 "owasp_name": "Identification & Authentication Failures",
                 "title": "Insecure Authentication or Disabled TLS",
-                "fix": "Enforce SSL/TLS validation (remove verify=False) and require cryptographically signed JWT algorithms.",
+                "fix": "Enforce SSL/TLS certificate validation (avoid disabling verification) and require cryptographically signed JWT algorithms.",
             },
             "ssrf": {
                 "severity": "HIGH",
@@ -317,9 +358,10 @@ def main():
             TextColumn("[progress.description]{task.description}"),
             console=console,
         ) as progress:
-            task = progress.add_task("📦 Auditing package dependencies (Google OSV API)...", total=None)
-            sca_findings = audit_dependencies(target_path)
-            progress.update(task, description=f"📦 Found {len(sca_findings)} vulnerable dependency advisories")
+            sca_task = progress.add_task("📦 Auditing package dependencies (Google OSV API)...", total=None)
+            changed_file_paths = [f["relative_path"] for f in files] if args.diff else None
+            sca_findings = audit_dependencies(target_path, changed_files=changed_file_paths)
+            progress.update(sca_task, description=f"📦 Found {len(sca_findings)} vulnerable dependency advisories")
         findings.extend(sca_findings)
 
     if not findings and not all_snippets:
@@ -447,6 +489,18 @@ def main():
         else:
             console.print("[dim]No fixes could be applied automatically.[/dim]")
 
+    # ── Step 9: Severity threshold enforcement (for CI/CD & pre-commit) ───
+    if args.fail_on != "none":
+        from config import SEVERITY_ORDER
+        fail_level = SEVERITY_ORDER.get(args.fail_on.upper(), 0)
+        failures = [f for f in findings if SEVERITY_ORDER.get(f.severity, 0) >= fail_level]
+        if failures:
+            console.print(
+                f"\n[bold red]❌ Scan failed policy check: {len(failures)} issue(s) at or above '{args.fail_on.upper()}' severity.[/bold red]"
+            )
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
+

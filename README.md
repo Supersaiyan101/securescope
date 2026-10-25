@@ -48,7 +48,8 @@ securescope/
 │   ├── file_walker.py          # Git-aware file traversal (respects .gitignore, supports --diff)
 │   ├── pre_filter.py           # Multi-language regex engine extracting suspicious snippets
 │   ├── languages.py            # 200+ targeted vulnerability patterns across 6+ languages
-│   └── dependency_auditor.py   # Software Supply-Chain & Dependency Auditor (Google OSV)
+│   ├── dependency_auditor.py   # Software Supply-Chain & Dependency Auditor (Google OSV)
+│   └── git_hook.py             # Git pre-commit hook manager for zero-config security guards
 ├── analyzer/
 │   ├── __init__.py
 │   ├── ai_client.py            # AI adapter for Google Gemma 2 (Groq API & Ollama local)
@@ -195,6 +196,23 @@ python cli.py --path ./my-project
 # To disable dependency auditing:
 python cli.py --path ./my-project --no-sca
 ```
+
+### 9. One-Click Git Pre-Commit Hook & Policy Enforcement
+Prevent secrets, SQL injection, and vulnerable packages from ever entering version control:
+```bash
+# Install the pre-commit hook into your Git repository:
+python cli.py --install-hook
+
+# When any developer runs 'git commit', SecureScope automatically screens staged files:
+git commit -m "feat: add user login"
+# 🔐 [SecureScope] Auditing staged code and dependencies before commit...
+# 🚨 [SecureScope] Commit rejected: Security issues detected in staged changes!
+
+# Customize severity threshold or uninstall anytime:
+python cli.py --install-hook --fail-on critical
+python cli.py --uninstall-hook
+```
+
 
 
 ---

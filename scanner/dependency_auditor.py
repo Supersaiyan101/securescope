@@ -122,13 +122,18 @@ def extract_fixed_version(vuln_data: dict) -> Optional[str]:
     return None
 
 
-def audit_dependencies(target_path: str, max_per_package: int = 3) -> list[Finding]:
+def audit_dependencies(
+    target_path: str,
+    max_per_package: int = 3,
+    changed_files: Optional[list[str]] = None,
+) -> list[Finding]:
     """
     Scan the target directory for package manifests and query OSV for vulnerabilities.
 
     Args:
         target_path: Absolute or relative directory path to inspect.
         max_per_package: Maximum number of CVE findings to report per vulnerable package.
+        changed_files: Optional list of changed file relative paths (for --diff mode).
 
     Returns:
         List of Finding objects for discovered supply-chain vulnerabilities.
@@ -141,10 +146,15 @@ def audit_dependencies(target_path: str, max_per_package: int = 3) -> list[Findi
         if "node_modules" in root or ".venv" in root or "venv" in root or ".git" in root:
             continue
         for file in files:
-            if file == "requirements.txt":
-                manifests_found.append((os.path.join(root, file), "requirements.txt"))
-            elif file == "package.json":
-                manifests_found.append((os.path.join(root, file), "package.json"))
+            if file in ("requirements.txt", "package.json"):
+                full_path = os.path.join(root, file)
+                rel_path = os.path.relpath(full_path, target_path).replace("\\", "/")
+                # If running in diff mode, only audit manifest if it was changed
+                if changed_files is not None:
+                    norm_changed = [p.replace("\\", "/") for p in changed_files]
+                    if rel_path not in norm_changed and file not in norm_changed:
+                        continue
+                manifests_found.append((full_path, file))
 
     for manifest_path, manifest_type in manifests_found:
         if manifest_type == "requirements.txt":
